@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FreelanceFlow - Stabilize Your Freelance Income with AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+              poppins: ['Poppins', 'sans-serif'],
+            },
+            colors: {
+              // Light Theme
+              'light-bg': '#F7FAFC',
+              'light-card': '#FFFFFF',
+              'light-text': '#111827',
+
+              // New Dark Theme: "Abyssal Tech"
+              'primary-gradient-start': '#388BFD',
+              'primary-gradient-end': '#58A6FF',
+              'dark-bg': '#0D1117',
+              'dark-bg-secondary': '#161B22',
+              'dark-card': '#1C2128',
+              'dark-border': '#30363D',
+              'dark-text': '#E6EDF3', // Primary
+              'dark-text-secondary': '#C9D1D9', // Secondary
+              'dark-text-tertiary': '#8B949E', // Tertiary
+              
+              'accent': '#58A6FF',
+              'success': '#3FB950',
+              'warning': '#F0B72F',
+              'error': '#F85149',
+            },
+            boxShadow: {
+              'glow-primary': '0 0 15px rgba(88, 166, 255, 0.5), 0 0 5px rgba(56, 139, 253, 0.4)',
+            },
+            backdropBlur: {
+              'xl': '24px',
+            },
+          }
+        }
+      }
+    </script>
+    <style>
+      body.dark {
+        /* A subtle gradient from the secondary background to the primary background */
+        background-image: linear-gradient(180deg, #161B22 0%, #0D1117 50%);
+        background-attachment: fixed;
+      }
+    </style>
+    <script src="https://www.paypal.com/sdk/js?client-id=test&currency=EUR"></script>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.27.0",
+    "recharts": "https://aistudiocdn.com/recharts@^3.3.0",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.552.0",
+    "jspdf": "https://aistudiocdn.com/jspdf@^2.5.1",
+    "framer-motion": "https://aistudiocdn.com/framer-motion@^11.3.19"
+  }
+}
+</script>
+</head>
+  <body class="bg-light-bg">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
