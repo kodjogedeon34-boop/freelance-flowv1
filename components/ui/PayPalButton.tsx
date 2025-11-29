@@ -17,6 +17,7 @@ interface PayPalButtonProps {
 
 export const PayPalButton: React.FC<PayPalButtonProps> = ({ onSuccess, onError, amount, description }) => {
   const paypalRef = useRef<HTMLDivElement>(null);
+  const isUnmounted = useRef(false);
 
   // Keep the refs updated with the latest callbacks to avoid re-triggering the effect
   const onSuccessRef = useRef(onSuccess);
@@ -28,6 +29,7 @@ export const PayPalButton: React.FC<PayPalButtonProps> = ({ onSuccess, onError, 
   }, [onSuccess, onError]);
   
   useEffect(() => {
+    isUnmounted.current = false;
     const container = paypalRef.current;
     if (!container) return;
 
@@ -35,7 +37,7 @@ export const PayPalButton: React.FC<PayPalButtonProps> = ({ onSuccess, onError, 
     if (!window.paypal || !window.paypal.Buttons) {
       console.error("PayPal SDK is not available.");
       // We can't render the button, so call the error handler
-      onErrorRef.current();
+      if (!isUnmounted.current) onErrorRef.current();
       return;
     }
 
@@ -65,6 +67,7 @@ export const PayPalButton: React.FC<PayPalButtonProps> = ({ onSuccess, onError, 
           });
         },
         onApprove: async (_data: any, actions: any) => {
+          if (isUnmounted.current) return;
           try {
             await actions.order.capture();
             onSuccessRef.current();
@@ -74,6 +77,7 @@ export const PayPalButton: React.FC<PayPalButtonProps> = ({ onSuccess, onError, 
           }
         },
         onError: (err: any) => {
+          if (isUnmounted.current) return;
           console.error("PayPal SDK Error:", err);
           // Don't trigger global onErrorRef here immediately to avoid UI loops if it's a soft error
         }
@@ -91,6 +95,7 @@ export const PayPalButton: React.FC<PayPalButtonProps> = ({ onSuccess, onError, 
 
     // Cleanup function to run when the component unmounts or dependencies change.
     return () => {
+      isUnmounted.current = true;
       if (buttonsInstance && typeof buttonsInstance.close === 'function') {
         try {
             buttonsInstance.close().catch((err: any) => console.log(err));

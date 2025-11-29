@@ -6,7 +6,7 @@ import { Button } from './ui/Button';
 import { Modal } from './ui/Modal';
 import { PayPalButton } from './ui/PayPalButton';
 import { Loader } from './ui/Loader';
-import { CheckCircle, Award, PlusCircle, X, ArrowDownCircle, ArrowUpCircle, Trash2, PieChart, Banknote, BrainCircuit, AlertTriangle, Lightbulb, Pencil, Target, Wallet, ListTodo, UserCircle, Upload, Star, TrendingUp, TrendingDown, Badge, Info, Download, Calendar, Clock, AlertCircle, LogOut } from 'lucide-react';
+import { CheckCircle, Award, PlusCircle, X, ArrowDownCircle, ArrowUpCircle, Trash2, PieChart, Banknote, BrainCircuit, AlertTriangle, Lightbulb, Pencil, Target, Wallet, ListTodo, UserCircle, Upload, Star, TrendingUp, TrendingDown, Badge, Info, Download, Calendar, Clock, AlertCircle, LogOut, Filter } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Pie, Cell, AreaChart, Area, CartesianGrid } from 'recharts';
 import { Transaction, TransactionType, Pot, IAAnalysis, Task, TaskStatus, TaskPriority, Profile, Plan, FinancialPlan, User } from '../types';
 import { getAIAnalysis } from '../services/geminiService';
@@ -202,25 +202,69 @@ const DashboardPage: React.FC<{ transactions: Transaction[], xp: number, financi
     );
 };
 
-const TransactionsPage: React.FC<{ transactions: Transaction[], onAddTransaction: (t: Omit<Transaction, 'id'>) => void }> = ({ transactions, onAddTransaction }) => {
+const TransactionsPage: React.FC<{ 
+    transactions: Transaction[], 
+    onAddTransaction: (t: Omit<Transaction, 'id'>) => void,
+    onUpdateTransaction: (t: Transaction) => void,
+    onDeleteTransaction: (id: string) => void
+}> = ({ transactions, onAddTransaction, onUpdateTransaction, onDeleteTransaction }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalType, setModalType] = useState<TransactionType>(TransactionType.INCOME);
     const [amount, setAmount] = useState('');
     const [source, setSource] = useState('');
     const [tags, setTags] = useState('');
     const [notes, setNotes] = useState('');
+    const [date, setDate] = useState('');
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [deletingId, setDeletingId] = useState<string | null>(null);
 
-    const openModal = (type: TransactionType) => {
-        setModalType(type); setAmount(''); setSource(''); setTags(''); setNotes(''); setIsModalOpen(true);
+    const openModal = (type: TransactionType, transaction?: Transaction) => {
+        setModalType(type);
+        if (transaction) {
+            setEditingId(transaction.id);
+            setAmount(transaction.amount.toString());
+            setSource(transaction.source);
+            setTags(transaction.tags ? transaction.tags.join(', ') : '');
+            setNotes(transaction.notes || '');
+            setDate(new Date(transaction.date).toISOString().split('T')[0]);
+        } else {
+            setEditingId(null);
+            setAmount('');
+            setSource('');
+            setTags('');
+            setNotes('');
+            setDate(new Date().toISOString().split('T')[0]);
+        }
+        setIsModalOpen(true);
     }
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if(parseFloat(amount) > 0 && source) {
-            onAddTransaction({ type: modalType, amount: parseFloat(amount), source, date: new Date().toISOString(), tags: tags.split(',').map(t => t.trim()).filter(Boolean), notes });
+            const txData = {
+                type: modalType,
+                amount: parseFloat(amount),
+                source,
+                date: new Date(date || new Date()).toISOString(),
+                tags: tags.split(',').map(t => t.trim()).filter(Boolean),
+                notes
+            };
+
+            if (editingId) {
+                onUpdateTransaction({ ...txData, id: editingId });
+            } else {
+                onAddTransaction(txData);
+            }
             setIsModalOpen(false);
         }
     }
+
+    const confirmDelete = () => {
+        if (deletingId) {
+            onDeleteTransaction(deletingId);
+            setDeletingId(null);
+        }
+    };
 
     // Stats calculation for the current month
     const stats = useMemo(() => {
@@ -348,10 +392,57 @@ const TransactionsPage: React.FC<{ transactions: Transaction[], onAddTransaction
             </div>
 
             <Card>
-                 <ul className="space-y-3">{transactions.map(t => (<li key={t.id} className="flex justify-between items-center p-3 rounded-lg dark:hover:bg-accent/10 transition-colors"><div className="flex items-center gap-4">{t.type === TransactionType.INCOME ? <ArrowUpCircle className="text-success w-6 h-6 flex-shrink-0" /> : <ArrowDownCircle className="text-error w-6 h-6 flex-shrink-0" />}<div><p className="font-semibold">{t.source}</p><p className="text-xs text-dark-text-tertiary">{new Date(t.date).toLocaleDateString()}</p>{t.tags && t.tags.length > 0 && <div className="flex gap-1 mt-1">{t.tags.map(tag => <span key={tag} className="text-xs bg-dark-bg-secondary px-2 py-0.5 rounded-full">{tag}</span>)}</div>}</div></div><p className={`font-bold text-lg ${t.type === TransactionType.INCOME ? 'text-success' : 'text-error'}`}>{t.type === TransactionType.INCOME ? '+' : '-'} {t.amount.toFixed(2)}€</p></li>))}</ul>
+                 <ul className="space-y-3">
+                    {transactions.map(t => (
+                        <li key={t.id} className="flex flex-col md:flex-row justify-between items-start md:items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-accent/5 transition-colors group">
+                            <div className="flex items-center gap-4 w-full md:w-auto">
+                                {t.type === TransactionType.INCOME ? <ArrowUpCircle className="text-success w-6 h-6 flex-shrink-0" /> : <ArrowDownCircle className="text-error w-6 h-6 flex-shrink-0" />}
+                                <div>
+                                    <p className="font-semibold">{t.source}</p>
+                                    <p className="text-xs text-dark-text-tertiary">{new Date(t.date).toLocaleDateString()}</p>
+                                    {t.tags && t.tags.length > 0 && <div className="flex gap-1 mt-1">{t.tags.map(tag => <span key={tag} className="text-xs bg-dark-bg-secondary px-2 py-0.5 rounded-full">{tag}</span>)}</div>}
+                                </div>
+                            </div>
+                            <div className="flex items-center justify-between w-full md:w-auto mt-2 md:mt-0 gap-4">
+                                <p className={`font-bold text-lg ${t.type === TransactionType.INCOME ? 'text-success' : 'text-error'}`}>{t.type === TransactionType.INCOME ? '+' : '-'} {t.amount.toFixed(2)}€</p>
+                                <div className="flex items-center gap-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button onClick={() => openModal(t.type, t)} className="p-2 text-dark-text-tertiary hover:text-accent rounded-full hover:bg-gray-200 dark:hover:bg-dark-border" title="Modifier">
+                                        <Pencil className="w-4 h-4" />
+                                    </button>
+                                    <button onClick={() => setDeletingId(t.id)} className="p-2 text-dark-text-tertiary hover:text-error rounded-full hover:bg-gray-200 dark:hover:bg-dark-border" title="Supprimer">
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            </div>
+                        </li>
+                    ))}
+                 </ul>
             </Card>
-            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={modalType === TransactionType.INCOME ? 'Ajouter un revenu' : 'Ajouter une dépense'}>
-                <form onSubmit={handleSubmit} className="space-y-4"><input type="number" placeholder="Montant" value={amount} onChange={e => setAmount(e.target.value)} className="w-full p-2 mt-1 bg-gray-100 dark:bg-dark-bg-secondary border border-gray-300 dark:border-dark-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent" required/><input type="text" placeholder={modalType === TransactionType.INCOME ? 'Source' : 'Catégorie'} value={source} onChange={e => setSource(e.target.value)} className="w-full p-2 mt-1 bg-gray-100 dark:bg-dark-bg-secondary border border-gray-300 dark:border-dark-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent" required/><input type="text" placeholder="Tags (séparés par une virgule)" value={tags} onChange={e => setTags(e.target.value)} className="w-full p-2 mt-1 bg-gray-100 dark:bg-dark-bg-secondary border border-gray-300 dark:border-dark-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"/><textarea placeholder="Notes" value={notes} onChange={e => setNotes(e.target.value)} className="w-full p-2 mt-1 bg-gray-100 dark:bg-dark-bg-secondary border border-gray-300 dark:border-dark-border rounded-lg h-20 focus:outline-none focus:ring-2 focus:ring-accent"/><div className="flex justify-end gap-2"><Button type="button" variant="secondary" onClick={() => setIsModalOpen(false)}>Annuler</Button><Button type="submit">Ajouter</Button></div></form>
+
+            {/* Modal de création / édition */}
+            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingId ? 'Modifier la transaction' : (modalType === TransactionType.INCOME ? 'Ajouter un revenu' : 'Ajouter une dépense')}>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <input type="number" placeholder="Montant" value={amount} onChange={e => setAmount(e.target.value)} className="w-full p-2 mt-1 bg-gray-100 dark:bg-dark-bg-secondary border border-gray-300 dark:border-dark-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent" required/>
+                    <input type="text" placeholder={modalType === TransactionType.INCOME ? 'Source' : 'Catégorie'} value={source} onChange={e => setSource(e.target.value)} className="w-full p-2 mt-1 bg-gray-100 dark:bg-dark-bg-secondary border border-gray-300 dark:border-dark-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent" required/>
+                    <input type="date" value={date} onChange={e => setDate(e.target.value)} className="w-full p-2 mt-1 bg-gray-100 dark:bg-dark-bg-secondary border border-gray-300 dark:border-dark-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent" required />
+                    <input type="text" placeholder="Tags (séparés par une virgule)" value={tags} onChange={e => setTags(e.target.value)} className="w-full p-2 mt-1 bg-gray-100 dark:bg-dark-bg-secondary border border-gray-300 dark:border-dark-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"/>
+                    <textarea placeholder="Notes" value={notes} onChange={e => setNotes(e.target.value)} className="w-full p-2 mt-1 bg-gray-100 dark:bg-dark-bg-secondary border border-gray-300 dark:border-dark-border rounded-lg h-20 focus:outline-none focus:ring-2 focus:ring-accent"/>
+                    <div className="flex justify-end gap-2">
+                        <Button type="button" variant="secondary" onClick={() => setIsModalOpen(false)}>Annuler</Button>
+                        <Button type="submit">{editingId ? 'Modifier' : 'Ajouter'}</Button>
+                    </div>
+                </form>
+            </Modal>
+
+            {/* Modal de suppression */}
+             <Modal isOpen={!!deletingId} onClose={() => setDeletingId(null)} title="Confirmer la suppression">
+                <div className="space-y-4">
+                    <p>Êtes-vous sûr de vouloir supprimer cette transaction ?</p>
+                    <div className="flex justify-end gap-2">
+                        <Button variant="secondary" onClick={() => setDeletingId(null)}>Annuler</Button>
+                        <Button onClick={confirmDelete} className="bg-error hover:bg-red-600 text-white">Supprimer</Button>
+                    </div>
+                </div>
             </Modal>
         </motion.div>
     );
@@ -450,6 +541,10 @@ const TasksPage: React.FC<{
     const [priority, setPriority] = useState<TaskPriority>(TaskPriority.MEDIUM);
     const [dueDate, setDueDate] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
+    
+    // Filters State
+    const [filterStatus, setFilterStatus] = useState<'ALL' | TaskStatus>('ALL');
+    const [filterPriority, setFilterPriority] = useState<'ALL' | TaskPriority>('ALL');
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -471,7 +566,13 @@ const TasksPage: React.FC<{
         }
     };
 
-    const sortedTasks = [...tasks].sort((a, b) => {
+    const filteredTasks = tasks.filter(task => {
+        const matchesStatus = filterStatus === 'ALL' || task.status === filterStatus;
+        const matchesPriority = filterPriority === 'ALL' || task.priority === filterPriority;
+        return matchesStatus && matchesPriority;
+    });
+
+    const sortedTasks = [...filteredTasks].sort((a, b) => {
         if (a.status === b.status) {
             return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
         }
@@ -486,11 +587,44 @@ const TasksPage: React.FC<{
                     <PlusCircle className="mr-2 w-4 h-4"/> Nouvelle Tâche
                 </Button>
             </div>
+            
+            {/* Filter Toolbar */}
+            <Card className="mb-6 p-4">
+                <div className="flex flex-col md:flex-row gap-4 items-center">
+                    <div className="flex items-center gap-2 text-dark-text-secondary">
+                        <Filter size={18} />
+                        <span className="font-medium text-sm">Filtrer par :</span>
+                    </div>
+                    
+                    <div className="flex gap-4 w-full md:w-auto">
+                         <select 
+                            value={filterStatus} 
+                            onChange={(e) => setFilterStatus(e.target.value as 'ALL' | TaskStatus)}
+                            className="p-2 bg-gray-100 dark:bg-dark-bg-secondary border border-gray-300 dark:border-dark-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent flex-1 md:flex-none"
+                        >
+                            <option value="ALL">Tous les statuts</option>
+                            <option value={TaskStatus.PENDING}>En cours</option>
+                            <option value={TaskStatus.DONE}>Terminées</option>
+                        </select>
+
+                        <select 
+                            value={filterPriority} 
+                            onChange={(e) => setFilterPriority(e.target.value as 'ALL' | TaskPriority)}
+                            className="p-2 bg-gray-100 dark:bg-dark-bg-secondary border border-gray-300 dark:border-dark-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent flex-1 md:flex-none"
+                        >
+                            <option value="ALL">Toutes priorités</option>
+                            <option value={TaskPriority.HIGH}>Haute</option>
+                            <option value={TaskPriority.MEDIUM}>Moyenne</option>
+                            <option value={TaskPriority.LOW}>Faible</option>
+                        </select>
+                    </div>
+                </div>
+            </Card>
 
             <div className="grid grid-cols-1 gap-6">
                 <Card>
                     <h3 className="text-xl font-semibold mb-4 text-light-text dark:text-dark-text">Liste des tâches</h3>
-                    {tasks.length > 0 ? (
+                    {sortedTasks.length > 0 ? (
                         <div className="space-y-3">
                             {sortedTasks.map(task => (
                                 <div key={task.id} className={`flex flex-col md:flex-row md:items-center justify-between p-4 rounded-lg border transition-all ${task.status === TaskStatus.DONE ? 'bg-gray-50 dark:bg-dark-card/50 border-transparent opacity-75' : 'bg-light-card dark:bg-dark-bg-secondary border-dark-border hover:border-accent/50'}`}>
@@ -519,7 +653,7 @@ const TasksPage: React.FC<{
                     ) : (
                         <div className="text-center py-12 text-dark-text-tertiary">
                             <ListTodo className="w-12 h-12 mx-auto mb-4 opacity-50"/>
-                            <p>Aucune tâche pour le moment. Commencez par en créer une !</p>
+                            <p>Aucune tâche ne correspond à vos filtres.</p>
                         </div>
                     )}
                 </Card>
@@ -806,6 +940,16 @@ export const DashboardContent: React.FC<DashboardContentProps> = ({ page, user, 
     } else { setNotification({ type: 'success', message: 'Dépense ajoutée !' }); }
   };
 
+  const handleUpdateTransaction = (updatedTx: Transaction) => {
+    setTransactions(prev => prev.map(t => t.id === updatedTx.id ? updatedTx : t));
+    setNotification({ type: 'success', message: 'Transaction modifiée.' });
+  };
+
+  const handleDeleteTransaction = (id: string) => {
+    setTransactions(prev => prev.filter(t => t.id !== id));
+    setNotification({ type: 'success', message: 'Transaction supprimée.' });
+  };
+
   const handleAddPot = (newPot: Omit<Pot, 'id' | 'balance'>) => { setPots(prev => [...prev, { ...newPot, id: crypto.randomUUID(), balance: 0 }]); };
   const handleDeletePot = (id: string) => { setPots(currentPots => currentPots.filter(p => p.id !== id)); };
   
@@ -866,7 +1010,7 @@ export const DashboardContent: React.FC<DashboardContentProps> = ({ page, user, 
   const renderContent = () => {
     switch (page) {
       case 'dashboard': return <DashboardPage transactions={transactions} xp={xp} financialPlan={financialPlan} plan={plan} tasks={tasks} />;
-      case 'transactions': return <TransactionsPage transactions={transactions} onAddTransaction={handleAddTransaction} />;
+      case 'transactions': return <TransactionsPage transactions={transactions} onAddTransaction={handleAddTransaction} onUpdateTransaction={handleUpdateTransaction} onDeleteTransaction={handleDeleteTransaction} />;
       case 'pots': return <PotsPage pots={pots} onAddPot={handleAddPot} onDeletePot={handleDeletePot} plan={plan} setNotification={setNotification} />;
       case 'smartBudget': return <SmartBudgetPage plan={plan} transactions={transactions} financialPlan={financialPlan} setFinancialPlan={setFinancialPlan} setNotification={setNotification} />;
       case 'tasks': return <TasksPage tasks={tasks} onAddTask={handleAddTask} onToggleTask={handleToggleTaskStatus} onDeleteTask={handleDeleteTask} />;

@@ -1,10 +1,23 @@
-import { GoogleGenAI, Chat, Type } from "@google/genai";
+import { GoogleGenAI, Chat, Type, GenerateContentResponse } from "@google/genai";
 import { Transaction, Pot, IAAnalysis } from '../types';
 
 // Per coding guidelines, the API key is assumed to be in the environment.
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 let chat: Chat | null = null;
+
+// Helper for retry logic
+const retryOperation = async <T>(operation: () => Promise<T>, retries = 3, delay = 1000): Promise<T> => {
+  try {
+    return await operation();
+  } catch (error) {
+    if (retries > 0) {
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return retryOperation(operation, retries - 1, delay * 2);
+    }
+    throw error;
+  }
+};
 
 const initializeChat = () => {
   if (!chat) {
@@ -158,8 +171,8 @@ export const getChatResponse = async (message: string): Promise<string> => {
   initializeChat();
 
   try {
-    const response = await chat!.sendMessage({ message });
-    return response.text;
+    const response = await retryOperation<GenerateContentResponse>(() => chat!.sendMessage({ message }));
+    return response.text || '';
   } catch (error) {
     console.error("Error calling Gemini API for chat:", error);
     // Reset chat on error in case the session is corrupted
@@ -187,7 +200,7 @@ export const getAIAnalysis = async (transactions: Transaction[], pots: Pot[], ba
   `;
 
   try {
-    const response = await ai.models.generateContent({
+    const response = await retryOperation<GenerateContentResponse>(() => ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: prompt,
       config: {
@@ -227,9 +240,12 @@ export const getAIAnalysis = async (transactions: Transaction[], pots: Pot[], ba
           required: ["baseline", "buffer", "allocation_rules", "predicted_deficit", "recommended_actions"]
         }
       }
-    });
+    }));
 
     const jsonString = response.text;
+    if (!jsonString) {
+      throw new Error("No text returned from AI");
+    }
     return JSON.parse(jsonString) as IAAnalysis;
   } catch (error) {
     console.error("Error calling Gemini API for analysis:", error);
