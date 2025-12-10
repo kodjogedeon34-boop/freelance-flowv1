@@ -2,13 +2,14 @@
 import React from 'react';
 import { Button } from './ui/Button';
 import { Card } from './ui/Card';
-import { BarChart, PiggyBank, BrainCircuit, CheckCircle, Target, Star } from 'lucide-react';
+import { BarChart, PiggyBank, BrainCircuit, CheckCircle, Target, Star, LogIn } from 'lucide-react';
 
 interface LandingPageProps {
-  onStart: () => void;
+  onLogin: () => void;
+  onRegister: () => void;
 }
 
-export const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
+export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onRegister }) => {
   return (
     <div className="font-poppins bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text min-h-screen">
       {/* Header */}
@@ -20,7 +21,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
             <h1 className="ml-3 text-2xl font-bold">FreelanceFlow v2</h1>
         </div>
         <div className="flex gap-4">
-             <Button onClick={onStart} variant="primary">Accéder à mon espace</Button>
+             <Button onClick={onLogin} variant="ghost" className="hidden md:flex items-center">
+                <LogIn className="w-4 h-4 mr-2" />
+                Se connecter
+             </Button>
+             <Button onClick={onRegister} variant="primary">Commencer</Button>
         </div>
       </header>
 
@@ -32,7 +37,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
         <p className="text-xl text-gray-600 dark:text-dark-text-secondary max-w-3xl mx-auto mb-8">
           Budget, objectifs, et IA. Tout ce dont vous avez besoin pour maîtriser vos finances et faire décoller votre activité.
         </p>
-        <Button onClick={onStart} className="text-lg px-8 py-4">Commencer gratuitement</Button>
+        <div className="flex flex-col md:flex-row gap-4 justify-center">
+            <Button onClick={onRegister} className="text-lg px-8 py-4">Commencer gratuitement</Button>
+            <Button onClick={onLogin} variant="secondary" className="md:hidden text-lg px-8 py-4">Se connecter</Button>
+        </div>
       </main>
 
       {/* Features Section */}
@@ -73,7 +81,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
                         <li className="flex items-start"><CheckCircle className="w-5 h-5 text-success mr-2 mt-1 flex-shrink-0"/> Suivi revenus/dépenses</li>
                         <li className="flex items-start"><CheckCircle className="w-5 h-5 text-success mr-2 mt-1 flex-shrink-0"/> Budget Intelligent (1 objectif/mois)</li>
                     </ul>
-                    <Button variant="secondary" onClick={onStart} className="w-full mt-6">Commencer</Button>
+                    <Button variant="secondary" onClick={onRegister} className="w-full mt-6">Commencer</Button>
                 </Card>
                 <Card className="flex-1 w-full border-2 border-accent shadow-glow-primary relative flex flex-col">
                      <div className="absolute top-0 -translate-y-1/2 left-1/2 -translate-x-1/2 px-4 py-1 text-sm text-white bg-gradient-to-r from-primary-gradient-start to-primary-gradient-end rounded-full font-semibold">Le plus populaire</div>
@@ -87,7 +95,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
                         <li className="flex items-start"><CheckCircle className="w-5 h-5 text-success mr-2 mt-1 flex-shrink-0"/> Gamification complète (Niveaux & Badges)</li>
                         <li className="flex items-start"><CheckCircle className="w-5 h-5 text-success mr-2 mt-1 flex-shrink-0"/> Notifications intelligentes</li>
                     </ul>
-                    <Button onClick={onStart} className="w-full mt-6">Passer Pro</Button>
+                    <Button onClick={onRegister} className="w-full mt-6">Passer Pro</Button>
                 </Card>
                 <Card className="flex-1 w-full flex flex-col">
                     <h4 className="text-2xl font-bold mb-2">Ultimate</h4>
@@ -100,7 +108,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
                         <li className="flex items-start"><CheckCircle className="w-5 h-5 text-success mr-2 mt-1 flex-shrink-0"/> Widgets de dashboard personnalisés</li>
                         <li className="flex items-start"><CheckCircle className="w-5 h-5 text-success mr-2 mt-1 flex-shrink-0"/> Support prioritaire</li>
                     </ul>
-                    <Button variant="secondary" onClick={onStart} className="w-full mt-6">Choisir Ultimate</Button>
+                    <Button variant="secondary" onClick={onRegister} className="w-full mt-6">Choisir Ultimate</Button>
                 </Card>
             </div>
         </div>

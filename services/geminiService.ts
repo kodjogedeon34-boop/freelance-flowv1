@@ -2,7 +2,7 @@ import { GoogleGenAI, Chat, Type, GenerateContentResponse } from "@google/genai"
 import { Transaction, Pot, IAAnalysis } from '../types';
 
 // Per coding guidelines, the API key is assumed to be in the environment.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// We initialize inside functions to prevent app crash if process.env is undefined at startup.
 
 let chat: Chat | null = null;
 
@@ -21,6 +21,8 @@ const retryOperation = async <T>(operation: () => Promise<T>, retries = 3, delay
 
 const initializeChat = () => {
   if (!chat) {
+    // Instantiation moved here to be safe
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     chat = ai.chats.create({
       model: 'gemini-2.5-flash',
       config: {
@@ -168,9 +170,8 @@ Pour ta toute première réponse, et uniquement pour celle-ci, réponds seulemen
 };
 
 export const getChatResponse = async (message: string): Promise<string> => {
-  initializeChat();
-
   try {
+    initializeChat();
     const response = await retryOperation<GenerateContentResponse>(() => chat!.sendMessage({ message }));
     return response.text || '';
   } catch (error) {
@@ -200,6 +201,9 @@ export const getAIAnalysis = async (transactions: Transaction[], pots: Pot[], ba
   `;
 
   try {
+    // Instantiate here to be safe
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    
     const response = await retryOperation<GenerateContentResponse>(() => ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: prompt,

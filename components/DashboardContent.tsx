@@ -6,7 +6,7 @@ import { Button } from './ui/Button';
 import { Modal } from './ui/Modal';
 import { PayPalButton } from './ui/PayPalButton';
 import { Loader } from './ui/Loader';
-import { CheckCircle, Award, PlusCircle, X, ArrowDownCircle, ArrowUpCircle, Trash2, PieChart, Banknote, BrainCircuit, AlertTriangle, Lightbulb, Pencil, Target, Wallet, ListTodo, UserCircle, Upload, Star, TrendingUp, TrendingDown, Badge, Info, Download, Calendar, Clock, AlertCircle, LogOut, Filter } from 'lucide-react';
+import { CheckCircle, Award, PlusCircle, X, ArrowDownCircle, ArrowUpCircle, Trash2, PieChart, Banknote, BrainCircuit, AlertTriangle, Lightbulb, Pencil, Target, Wallet, ListTodo, UserCircle, Upload, Star, TrendingUp, TrendingDown, Badge, Info, Download, Calendar, Clock, AlertCircle, LogOut, Filter, Mail, BellRing } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Pie, Cell, AreaChart, Area, CartesianGrid } from 'recharts';
 import { Transaction, TransactionType, Pot, IAAnalysis, Task, TaskStatus, TaskPriority, Profile, Plan, FinancialPlan, User } from '../types';
 import { getAIAnalysis } from '../services/geminiService';
@@ -41,7 +41,7 @@ const DashboardPage: React.FC<{ transactions: Transaction[], xp: number, financi
         const dailyExpenses = monthTxs.filter(t => new Date(t.date).getDate() === today && t.type === TransactionType.EXPENSE).reduce((s,t) => s + t.amount, 0);
 
         const projection = today > 0 ? (income / today) * daysInMonth : 0;
-        const tasksDoneToday = tasks.filter(t => t.status === TaskStatus.DONE && new Date(t.dueDate).getDate() === today).length;
+        const tasksDoneToday = tasks.filter(t => (t.status === TaskStatus.DONE || t.status === TaskStatus.PAYMENT_RECEIVED) && new Date(t.dueDate).getDate() === today).length;
 
         return { income, expenses, net: income - expenses, dailyIncome, dailyExpenses, projection, tasksDoneToday };
     }, [transactions, tasks, plan]);
@@ -534,13 +534,14 @@ const PotsPage: React.FC<{ pots: Pot[], onAddPot: (pot: Omit<Pot, 'id' | 'balanc
 const TasksPage: React.FC<{ 
     tasks: Task[], 
     onAddTask: (task: Omit<Task, 'id' | 'status'>) => void, 
-    onToggleTask: (id: string) => void,
+    onStatusChange: (id: string, newStatus: TaskStatus) => void,
     onDeleteTask: (id: string) => void
-}> = ({ tasks, onAddTask, onToggleTask, onDeleteTask }) => {
+}> = ({ tasks, onAddTask, onStatusChange, onDeleteTask }) => {
     const [title, setTitle] = useState('');
     const [priority, setPriority] = useState<TaskPriority>(TaskPriority.MEDIUM);
     const [dueDate, setDueDate] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [taskToDeleteId, setTaskToDeleteId] = useState<string | null>(null);
     
     // Filters State
     const [filterStatus, setFilterStatus] = useState<'ALL' | TaskStatus>('ALL');
@@ -557,6 +558,13 @@ const TasksPage: React.FC<{
         }
     };
 
+    const confirmDelete = () => {
+        if (taskToDeleteId) {
+            onDeleteTask(taskToDeleteId);
+            setTaskToDeleteId(null);
+        }
+    };
+
     const getPriorityColor = (p: TaskPriority) => {
         switch(p) {
             case TaskPriority.HIGH: return 'text-error bg-error/10 border-error/20';
@@ -565,6 +573,15 @@ const TasksPage: React.FC<{
             default: return 'text-gray-500 bg-gray-100';
         }
     };
+    
+    const getStatusColor = (s: TaskStatus) => {
+        switch(s) {
+            case TaskStatus.DONE: return 'text-gray-500 bg-gray-100 dark:bg-gray-800';
+            case TaskStatus.PAYMENT_RECEIVED: return 'text-green-600 bg-green-100 border-green-200';
+            case TaskStatus.INVOICE_SENT: return 'text-blue-600 bg-blue-100 border-blue-200';
+            default: return 'text-yellow-600 bg-yellow-100 border-yellow-200';
+        }
+    }
 
     const filteredTasks = tasks.filter(task => {
         const matchesStatus = filterStatus === 'ALL' || task.status === filterStatus;
@@ -604,6 +621,8 @@ const TasksPage: React.FC<{
                         >
                             <option value="ALL">Tous les statuts</option>
                             <option value={TaskStatus.PENDING}>En cours</option>
+                            <option value={TaskStatus.INVOICE_SENT}>Facture envoyée</option>
+                            <option value={TaskStatus.PAYMENT_RECEIVED}>Paiement reçu</option>
                             <option value={TaskStatus.DONE}>Terminées</option>
                         </select>
 
@@ -628,12 +647,29 @@ const TasksPage: React.FC<{
                         <div className="space-y-3">
                             {sortedTasks.map(task => (
                                 <div key={task.id} className={`flex flex-col md:flex-row md:items-center justify-between p-4 rounded-lg border transition-all ${task.status === TaskStatus.DONE ? 'bg-gray-50 dark:bg-dark-card/50 border-transparent opacity-75' : 'bg-light-card dark:bg-dark-bg-secondary border-dark-border hover:border-accent/50'}`}>
-                                    <div className="flex items-start md:items-center gap-4 mb-4 md:mb-0">
-                                        <button onClick={() => onToggleTask(task.id)} className={`mt-1 md:mt-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${task.status === TaskStatus.DONE ? 'bg-success border-success text-white' : 'border-gray-400 dark:border-dark-text-tertiary hover:border-accent'}`}>
-                                            {task.status === TaskStatus.DONE && <CheckCircle size={16} />}
-                                        </button>
-                                        <div>
-                                            <p className={`font-semibold text-lg ${task.status === TaskStatus.DONE ? 'line-through text-gray-500' : ''}`}>{task.title}</p>
+                                    <div className="flex flex-col md:flex-row items-start md:items-center gap-4 mb-4 md:mb-0 w-full md:w-2/3">
+                                        <div className="flex-shrink-0">
+                                            {task.status === TaskStatus.INVOICE_SENT ? (
+                                                 <Mail className="w-6 h-6 text-blue-500" />
+                                            ) : task.status === TaskStatus.PAYMENT_RECEIVED ? (
+                                                 <CheckCircle className="w-6 h-6 text-green-500" />
+                                            ) : task.status === TaskStatus.DONE ? (
+                                                <CheckCircle className="w-6 h-6 text-gray-400" />
+                                            ) : (
+                                                <div className="w-6 h-6 rounded-full border-2 border-gray-300 dark:border-dark-text-tertiary"></div>
+                                            )}
+                                        </div>
+                                        
+                                        <div className="flex-grow">
+                                            <div className="flex items-center gap-2">
+                                                 <p className={`font-semibold text-lg ${task.status === TaskStatus.DONE ? 'line-through text-gray-500' : ''}`}>{task.title}</p>
+                                                 {task.reminderSet && (
+                                                     <div className="flex items-center text-xs text-blue-500 bg-blue-100 dark:bg-blue-900/30 px-2 py-0.5 rounded-full">
+                                                         <BellRing size={10} className="mr-1" /> Rappel
+                                                     </div>
+                                                 )}
+                                            </div>
+                                            
                                             <div className="flex flex-wrap items-center gap-3 mt-1">
                                                 <span className={`text-xs px-2 py-0.5 rounded border ${getPriorityColor(task.priority)}`}>
                                                     {task.priority === TaskPriority.HIGH ? 'Haute' : task.priority === TaskPriority.MEDIUM ? 'Moyenne' : 'Faible'}
@@ -644,9 +680,23 @@ const TasksPage: React.FC<{
                                             </div>
                                         </div>
                                     </div>
-                                    <button onClick={() => onDeleteTask(task.id)} className="self-end md:self-center text-dark-text-tertiary hover:text-error transition-colors p-2">
-                                        <Trash2 size={18} />
-                                    </button>
+                                    
+                                    <div className="flex items-center justify-end w-full md:w-1/3 gap-3">
+                                        <select 
+                                            value={task.status}
+                                            onChange={(e) => onStatusChange(task.id, e.target.value as TaskStatus)}
+                                            className={`text-sm rounded-lg border-none focus:ring-2 focus:ring-accent p-2 cursor-pointer ${getStatusColor(task.status)}`}
+                                        >
+                                            <option value={TaskStatus.PENDING}>En cours</option>
+                                            <option value={TaskStatus.INVOICE_SENT}>Facture envoyée</option>
+                                            <option value={TaskStatus.PAYMENT_RECEIVED}>Paiement reçu</option>
+                                            <option value={TaskStatus.DONE}>Terminé</option>
+                                        </select>
+
+                                        <button onClick={() => setTaskToDeleteId(task.id)} className="text-dark-text-tertiary hover:text-error transition-colors p-2">
+                                            <Trash2 size={18} />
+                                        </button>
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -701,6 +751,17 @@ const TasksPage: React.FC<{
                         <Button type="submit">Ajouter</Button>
                     </div>
                 </form>
+            </Modal>
+            
+            {/* Delete Task Confirmation Modal */}
+            <Modal isOpen={!!taskToDeleteId} onClose={() => setTaskToDeleteId(null)} title="Confirmer la suppression">
+                <div className="space-y-4">
+                    <p>Êtes-vous sûr de vouloir supprimer cette tâche ? Cette action est irréversible.</p>
+                    <div className="flex justify-end gap-2">
+                        <Button variant="secondary" onClick={() => setTaskToDeleteId(null)}>Annuler</Button>
+                        <Button onClick={confirmDelete} className="bg-error hover:bg-red-600 text-white">Supprimer</Button>
+                    </div>
+                </div>
             </Modal>
         </motion.div>
     );
@@ -959,15 +1020,44 @@ export const DashboardContent: React.FC<DashboardContentProps> = ({ page, user, 
       setNotification({ type: 'success', message: 'Tâche ajoutée !' });
   };
 
-  const handleToggleTaskStatus = (id: string) => {
+  const handleTaskStatusChange = (id: string, newStatus: TaskStatus) => {
       setTasks(prev => prev.map(t => {
           if (t.id === id) {
-              const newStatus = t.status === TaskStatus.PENDING ? TaskStatus.DONE : TaskStatus.PENDING;
-              if (newStatus === TaskStatus.DONE) {
-                  setXp(x => x + 10); // XP for completing task
-                  setNotification({ type: 'success', message: 'Tâche complétée (+10 XP) !' });
-              }
-              return { ...t, status: newStatus };
+             let updatedTask = { ...t, status: newStatus };
+             
+             // Handle "Invoice Sent" -> Set Reminder logic
+             if (newStatus === TaskStatus.INVOICE_SENT) {
+                 const dueDate = new Date(t.dueDate);
+                 const reminderDate = new Date(dueDate);
+                 reminderDate.setDate(dueDate.getDate() - 7);
+                 
+                 // In a real app, this would schedule a notification via backend or local notification API.
+                 // Here we just mark it visually and notify user.
+                 updatedTask = { ...updatedTask, reminderSet: true };
+                 
+                 const today = new Date();
+                 const daysUntilReminder = Math.ceil((reminderDate.getTime() - today.getTime()) / (1000 * 3600 * 24));
+                 
+                 setNotification({ 
+                     type: 'success', 
+                     message: `Facture envoyée. Rappel de paiement configuré pour le ${reminderDate.toLocaleDateString()}.` 
+                 });
+             } 
+             // Handle "Payment Received"
+             else if (newStatus === TaskStatus.PAYMENT_RECEIVED) {
+                 if (t.status !== TaskStatus.PAYMENT_RECEIVED) {
+                     setNotification({ type: 'success', message: 'Paiement reçu ! Félicitations !' });
+                     // Could optionally prompt to add income here, but kept simple for now
+                 }
+                 updatedTask = { ...updatedTask, reminderSet: false }; // Clear reminder if paid
+             }
+             // Handle "Done"
+             else if (newStatus === TaskStatus.DONE && t.status !== TaskStatus.DONE) {
+                  setXp(x => x + 10);
+                  setNotification({ type: 'success', message: 'Tâche terminée (+10 XP) !' });
+             }
+
+             return updatedTask;
           }
           return t;
       }));
@@ -1013,7 +1103,7 @@ export const DashboardContent: React.FC<DashboardContentProps> = ({ page, user, 
       case 'transactions': return <TransactionsPage transactions={transactions} onAddTransaction={handleAddTransaction} onUpdateTransaction={handleUpdateTransaction} onDeleteTransaction={handleDeleteTransaction} />;
       case 'pots': return <PotsPage pots={pots} onAddPot={handleAddPot} onDeletePot={handleDeletePot} plan={plan} setNotification={setNotification} />;
       case 'smartBudget': return <SmartBudgetPage plan={plan} transactions={transactions} financialPlan={financialPlan} setFinancialPlan={setFinancialPlan} setNotification={setNotification} />;
-      case 'tasks': return <TasksPage tasks={tasks} onAddTask={handleAddTask} onToggleTask={handleToggleTaskStatus} onDeleteTask={handleDeleteTask} />;
+      case 'tasks': return <TasksPage tasks={tasks} onAddTask={handleAddTask} onStatusChange={handleTaskStatusChange} onDeleteTask={handleDeleteTask} />;
       case 'incomeSmoother': return <IncomeSmootherPage analysis={aiAnalysis} onAnalyze={runAIAnalysis} isAnalyzing={isAnalyzing} />;
       case 'chatbot': return <Chatbot />;
       case 'pricing': return <PricingPage plan={plan} onUpgrade={handleUpgrade} />;

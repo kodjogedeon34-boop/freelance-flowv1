@@ -1,13 +1,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { LandingPage } from './components/LandingPage';
+import { LoginPage } from './components/auth/LoginPage';
+import { RegisterPage } from './components/auth/RegisterPage';
 import { Sidebar } from './components/layout/Sidebar';
 import { DashboardContent } from './components/DashboardContent';
 import { AuthService } from './services/authService';
 import { User } from './types';
 import { Menu, BrainCircuit } from 'lucide-react';
 
-type View = 'landing' | 'dashboard';
+type View = 'landing' | 'dashboard' | 'login' | 'register';
 
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User>(AuthService.getDefaultUser());
@@ -38,19 +40,9 @@ const App: React.FC = () => {
     setIsDarkMode(!isDarkMode);
   };
 
-  const handleStart = () => {
-    // Check if guest session needs to be created, or if user is already logged in
-    const sessionUser = AuthService.getSession();
-    if (sessionUser) {
-        setCurrentUser(sessionUser);
-        setCurrentView('dashboard');
-    } else {
-        // If no session, perform guest login
-        AuthService.guestLogin().then(user => {
-            setCurrentUser(user);
-            setCurrentView('dashboard');
-        });
-    }
+  const handleAuthSuccess = (user: User) => {
+    setCurrentUser(user);
+    setCurrentView('dashboard');
   };
 
   const handleLogout = () => {
@@ -73,7 +65,28 @@ const App: React.FC = () => {
   if (currentView === 'landing') {
     return (
       <LandingPage 
-        onStart={handleStart}
+        onLogin={() => setCurrentView('login')}
+        onRegister={() => setCurrentView('register')}
+      />
+    );
+  }
+
+  if (currentView === 'login') {
+    return (
+      <LoginPage 
+        onLoginSuccess={handleAuthSuccess}
+        onNavigateToRegister={() => setCurrentView('register')}
+        onBack={() => setCurrentView('landing')}
+      />
+    );
+  }
+
+  if (currentView === 'register') {
+    return (
+      <RegisterPage 
+        onRegisterSuccess={handleAuthSuccess}
+        onNavigateToLogin={() => setCurrentView('login')}
+        onBack={() => setCurrentView('landing')}
       />
     );
   }

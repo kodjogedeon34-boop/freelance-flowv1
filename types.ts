@@ -40,6 +40,8 @@ export interface IAAnalysis {
 
 export enum TaskStatus {
   PENDING = 'PENDING',
+  INVOICE_SENT = 'INVOICE_SENT',
+  PAYMENT_RECEIVED = 'PAYMENT_RECEIVED',
   DONE = 'DONE'
 }
 
@@ -55,6 +57,7 @@ export interface Task {
   priority: TaskPriority;
   dueDate: string;
   status: TaskStatus;
+  reminderSet?: boolean;
 }
 
 export interface Profile {

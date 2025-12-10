@@ -5,15 +5,10 @@ const DATA_PREFIX = 'ff_data_v2_';
 const SESSION_KEY = 'ff_session_v2';
 const DEFAULT_USER_ID = 'local-user';
 
-// Initial Mock Data used for new users
-const initialTransactions: Transaction[] = [
-    { id: '1', type: TransactionType.INCOME, amount: 2500, source: 'Client A', date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), tags: ['webdev', 'react'] },
-    { id: '2', type: TransactionType.EXPENSE, amount: 150, source: 'Logiciels', date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), tags: ['saas'] },
-    { id: '3', type: TransactionType.EXPENSE, amount: 800, source: 'Loyer', date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), tags: ['fixe'] },
-    { id: '4', type: TransactionType.INCOME, amount: 1200, source: 'Client B', date: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString(), tags: ['design'] },
-];
+// Initial Mock Data used for new users - CLEARED as per request
+const initialTransactions: Transaction[] = [];
 
-const initialPots: Pot[] = [ { id: 'p1', name: 'Impôts', percentage: 25, balance: 0 } ];
+const initialPots: Pot[] = [];
 
 // Helper functions to handle data persistence
 const saveUserDataHelper = (userId: string, data: UserData) => {
@@ -27,8 +22,8 @@ const loadUserDataHelper = (userId: string): UserData => {
   }
   // Fallback
   return {
-    transactions: initialTransactions,
-    pots: initialPots,
+    transactions: [],
+    pots: [],
     profile: { name: 'Freelance', age: null, monthlyGoal: 3000, photo: null, badges: ['Nouveau Membre'] },
     plan: 'free',
     xp: 0,
@@ -52,8 +47,8 @@ export const AuthService = {
   initializeDataIfNeeded: () => {
     if (!localStorage.getItem(DATA_PREFIX + DEFAULT_USER_ID)) {
        saveUserDataHelper(DEFAULT_USER_ID, {
-        transactions: initialTransactions,
-        pots: initialPots,
+        transactions: [],
+        pots: [],
         profile: { name: 'Freelance', age: null, monthlyGoal: 3000, photo: null, badges: ['Nouveau Membre'] },
         plan: 'free',
         xp: 0,
@@ -130,8 +125,8 @@ export const AuthService = {
 
     // Initialize default data for the new user
     saveUserDataHelper(id, {
-      transactions: initialTransactions,
-      pots: initialPots,
+      transactions: [],
+      pots: [],
       profile: { name: name, age: null, monthlyGoal: 3000, photo: null, badges: ['Nouveau Membre'] },
       plan: 'free',
       xp: 0,
@@ -165,8 +160,8 @@ export const AuthService = {
     // Initialize data if it doesn't exist for this user
     if (!localStorage.getItem(DATA_PREFIX + user.id)) {
       saveUserDataHelper(user.id, {
-        transactions: initialTransactions,
-        pots: initialPots,
+        transactions: [],
+        pots: [],
         profile: { name: user.name, age: null, monthlyGoal: 3000, photo: null, badges: ['Nouveau Membre'] },
         plan: 'free',
         xp: 0,
