@@ -94,17 +94,17 @@ const App: React.FC = () => {
   return (
     <div className="flex h-screen bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text font-sans overflow-hidden">
       
-      {/* Mobile Header */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-30 h-16 bg-light-card dark:bg-dark-bg-secondary border-b border-gray-200 dark:border-dark-border flex items-center justify-between px-4 shadow-sm">
+      {/* Mobile Header - Fixed at top */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-40 h-16 bg-light-card dark:bg-dark-bg-secondary border-b border-gray-200 dark:border-dark-border flex items-center justify-between px-4 shadow-sm transition-colors duration-300">
          <div className="flex items-center">
-            <div className="w-8 h-8 bg-gradient-to-r from-primary-gradient-start to-primary-gradient-end rounded-full flex items-center justify-center">
+            <div className="w-8 h-8 bg-gradient-to-r from-primary-gradient-start to-primary-gradient-end rounded-full flex items-center justify-center shadow-glow-primary">
               <BrainCircuit className="w-5 h-5 text-white" />
             </div>
-            <span className="ml-2 font-bold text-lg">FreelanceFlow v2</span>
+            <span className="ml-3 font-bold text-lg tracking-tight">FreelanceFlow</span>
          </div>
          <button 
             onClick={() => setIsMobileMenuOpen(true)}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-card text-gray-600 dark:text-dark-text-secondary"
+            className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-dark-card text-gray-600 dark:text-dark-text-secondary transition-colors"
          >
             <Menu className="w-6 h-6" />
          </button>
@@ -121,13 +121,14 @@ const App: React.FC = () => {
 
       {/* Main Content Area */}
       {/* 
-          md:ml-64 -> pushes content to right on desktop to accommodate fixed sidebar
-          ml-0 -> full width on mobile
-          pt-16 -> adds padding top on mobile for the fixed header
-          md:pt-0 -> removes padding top on desktop
+          CRITICAL FIX: 
+          md:ml-72 matches the Sidebar width (w-72). 
+          Previously it was ml-64, causing a 2rem overlap/shift.
       */}
-      <main className="flex-1 overflow-y-auto transition-all duration-300 md:ml-64 ml-0 pt-16 md:pt-0 w-full">
-        <DashboardContent page={activePage} user={currentUser} onLogout={handleLogout} />
+      <main className="flex-1 overflow-y-auto overflow-x-hidden transition-all duration-300 md:ml-72 ml-0 pt-16 md:pt-0 h-full w-full relative">
+        <div className="max-w-7xl mx-auto min-h-full">
+            <DashboardContent page={activePage} user={currentUser} onLogout={handleLogout} />
+        </div>
       </main>
     </div>
   );

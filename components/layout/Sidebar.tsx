@@ -20,8 +20,8 @@ const NavItem: React.FC<{ icon: React.ElementType; label: string; isActive: bool
         : 'text-gray-500 dark:text-dark-text-secondary hover:bg-gray-100 dark:hover:bg-white/5 hover:text-light-text dark:hover:text-dark-text'
     }`}
   >
-    <Icon className={`w-5 h-5 mr-3 ${isActive ? 'text-white' : ''}`} />
-    <span>{label}</span>
+    <Icon className={`w-5 h-5 mr-3 flex-shrink-0 ${isActive ? 'text-white' : ''}`} />
+    <span className="truncate">{label}</span>
   </button>
 );
 
@@ -45,29 +45,30 @@ export const Sidebar: React.FC<SidebarProps> = ({ activePage, setActivePage, isD
 
   return (
     <>
-      {/* Mobile Overlay */}
+      {/* Mobile Overlay - z-40 to be below sidebar (z-50) but above content */}
       {isOpen && (
         <div 
-          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-md md:hidden"
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden transition-opacity duration-300"
           onClick={onClose}
+          aria-hidden="true"
         />
       )}
 
-      {/* Sidebar Container */}
+      {/* Sidebar Container - z-50 to be on top of everything on mobile */}
       <aside 
-        className={`fixed inset-y-0 left-0 z-50 w-72 h-screen bg-light-card dark:bg-dark-bg border-r border-gray-200 dark:border-dark-border flex flex-col p-6 transition-transform duration-300 ease-in-out md:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 w-72 h-screen bg-light-card dark:bg-dark-bg border-r border-gray-200 dark:border-dark-border flex flex-col p-6 transition-transform duration-300 ease-in-out md:translate-x-0 shadow-2xl md:shadow-none ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         <div className="flex items-center justify-between mb-10 pl-2">
           <div className="flex items-center">
-            <div className="w-10 h-10 bg-gradient-to-br from-primary-gradient-start to-primary-gradient-end rounded-xl flex items-center justify-center shadow-glow-primary">
+            <div className="w-10 h-10 bg-gradient-to-br from-primary-gradient-start to-primary-gradient-end rounded-xl flex items-center justify-center shadow-glow-primary flex-shrink-0">
               <BrainCircuit className="w-6 h-6 text-white" />
             </div>
-            <h1 className="ml-3 text-xl font-bold text-light-text dark:text-dark-text tracking-tight">FreelanceFlow</h1>
+            <h1 className="ml-3 text-xl font-bold text-light-text dark:text-dark-text tracking-tight truncate">FreelanceFlow</h1>
           </div>
           {/* Close Button for Mobile */}
-          <button onClick={onClose} className="md:hidden text-gray-500 dark:text-dark-text-tertiary">
+          <button onClick={onClose} className="md:hidden p-2 rounded-lg text-gray-500 dark:text-dark-text-tertiary hover:bg-gray-100 dark:hover:bg-white/5">
             <X className="w-6 h-6" />
           </button>
         </div>
@@ -89,8 +90,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activePage, setActivePage, isD
             onClick={toggleDarkMode}
             className="flex items-center w-full px-5 py-4 text-sm font-medium rounded-2xl bg-gray-50 dark:bg-dark-card border border-gray-100 dark:border-dark-border text-gray-500 dark:text-dark-text-secondary hover:bg-gray-100 dark:hover:bg-dark-border transition-colors"
           >
-            {isDarkMode ? <Sun className="w-5 h-5 mr-3 text-warning" /> : <Moon className="w-5 h-5 mr-3 text-accent" />}
-            <span>{isDarkMode ? 'Mode Clair' : 'Mode Sombre'}</span>
+            {isDarkMode ? <Sun className="w-5 h-5 mr-3 text-warning flex-shrink-0" /> : <Moon className="w-5 h-5 mr-3 text-accent flex-shrink-0" />}
+            <span className="truncate">{isDarkMode ? 'Mode Clair' : 'Mode Sombre'}</span>
           </button>
         </div>
       </aside>
