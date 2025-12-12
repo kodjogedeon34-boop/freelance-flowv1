@@ -24,32 +24,38 @@
             },
             colors: {
               // Light Theme
-              'light-bg': '#F7FAFC',
+              'light-bg': '#F3F4F6',
               'light-card': '#FFFFFF',
-              'light-text': '#111827',
+              'light-text': '#18181B',
 
-              // New Dark Theme: "Abyssal Tech"
-              'primary-gradient-start': '#388BFD',
-              'primary-gradient-end': '#58A6FF',
-              'dark-bg': '#0D1117',
-              'dark-bg-secondary': '#161B22',
-              'dark-card': '#1C2128',
-              'dark-border': '#30363D',
-              'dark-text': '#E6EDF3', // Primary
-              'dark-text-secondary': '#C9D1D9', // Secondary
-              'dark-text-tertiary': '#8B949E', // Tertiary
+              // Dark Theme: "Violet OLED"
+              'primary-gradient-start': '#7C3AED', // Violet 600
+              'primary-gradient-end': '#C026D3',   // Fuchsia 600
               
-              'accent': '#58A6FF',
-              'success': '#3FB950',
-              'warning': '#F0B72F',
-              'error': '#F85149',
+              'dark-bg': '#050505',          // Almost Black
+              'dark-bg-secondary': '#0A0A0A', // Very Dark Grey
+              'dark-card': '#121212',        // Dark Card
+              'dark-border': '#27272A',      // Zinc 800
+              
+              'dark-text': '#F9FAFB',        // White
+              'dark-text-secondary': '#A1A1AA', // Zinc 400
+              'dark-text-tertiary': '#71717A',  // Zinc 500
+              
+              'accent': '#8B5CF6',           // Violet 500
+              'accent-glow': '#A78BFA',      // Violet 400
+              
+              'success': '#10B981',          // Emerald 500 (kept for semantic meaning, but less dominant)
+              'warning': '#F59E0B',          // Amber 500
+              'error': '#EF4444',            // Red 500
             },
             boxShadow: {
-              'glow-primary': '0 0 15px rgba(88, 166, 255, 0.5), 0 0 5px rgba(56, 139, 253, 0.4)',
+              'glow-primary': '0 0 20px rgba(124, 58, 237, 0.5), 0 0 10px rgba(192, 38, 211, 0.3)',
+              'glow-card': '0 0 0 1px rgba(39, 39, 42, 1), 0 4px 6px -1px rgba(0, 0, 0, 0.5)',
             },
-            backdropBlur: {
-              'xl': '24px',
-            },
+            borderRadius: {
+              '3xl': '1.5rem',
+              '4xl': '2rem',
+            }
           }
         }
       }
@@ -70,7 +76,7 @@
 }
 </script>
 </head>
-  <body class="bg-light-bg">
+  <body class="bg-light-bg transition-colors duration-300">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
   </body>

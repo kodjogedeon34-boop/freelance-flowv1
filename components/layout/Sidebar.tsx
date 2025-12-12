@@ -14,13 +14,13 @@ interface SidebarProps {
 const NavItem: React.FC<{ icon: React.ElementType; label: string; isActive: boolean; onClick: () => void; }> = ({ icon: Icon, label, isActive, onClick }) => (
   <button
     onClick={onClick}
-    className={`flex items-center w-full px-4 py-3 text-sm font-medium rounded-lg transition-colors duration-200 ${
+    className={`flex items-center w-full px-5 py-4 text-sm font-medium rounded-2xl transition-all duration-200 mb-1 ${
       isActive
-        ? 'bg-gradient-to-r from-primary-gradient-start/20 to-primary-gradient-end/20 text-accent dark:text-dark-text'
-        : 'text-gray-500 dark:text-dark-text-secondary hover:bg-gray-100 dark:hover:bg-dark-card'
+        ? 'bg-gradient-to-r from-primary-gradient-start to-primary-gradient-end text-white shadow-glow-primary'
+        : 'text-gray-500 dark:text-dark-text-secondary hover:bg-gray-100 dark:hover:bg-white/5 hover:text-light-text dark:hover:text-dark-text'
     }`}
   >
-    <Icon className="w-5 h-5 mr-3" />
+    <Icon className={`w-5 h-5 mr-3 ${isActive ? 'text-white' : ''}`} />
     <span>{label}</span>
   </button>
 );
@@ -48,23 +48,23 @@ export const Sidebar: React.FC<SidebarProps> = ({ activePage, setActivePage, isD
       {/* Mobile Overlay */}
       {isOpen && (
         <div 
-          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden"
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-md md:hidden"
           onClick={onClose}
         />
       )}
 
       {/* Sidebar Container */}
       <aside 
-        className={`fixed inset-y-0 left-0 z-50 w-64 h-screen bg-light-card dark:bg-dark-bg-secondary flex flex-col p-4 border-r border-gray-200 dark:border-dark-border transition-transform duration-300 ease-in-out md:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 w-72 h-screen bg-light-card dark:bg-dark-bg border-r border-gray-200 dark:border-dark-border flex flex-col p-6 transition-transform duration-300 ease-in-out md:translate-x-0 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-10 pl-2">
           <div className="flex items-center">
-            <div className="w-10 h-10 bg-gradient-to-r from-primary-gradient-start to-primary-gradient-end rounded-full flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-br from-primary-gradient-start to-primary-gradient-end rounded-xl flex items-center justify-center shadow-glow-primary">
               <BrainCircuit className="w-6 h-6 text-white" />
             </div>
-            <h1 className="ml-3 text-xl font-bold text-light-text dark:text-dark-text">FreelanceFlow</h1>
+            <h1 className="ml-3 text-xl font-bold text-light-text dark:text-dark-text tracking-tight">FreelanceFlow</h1>
           </div>
           {/* Close Button for Mobile */}
           <button onClick={onClose} className="md:hidden text-gray-500 dark:text-dark-text-tertiary">
@@ -72,7 +72,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activePage, setActivePage, isD
           </button>
         </div>
 
-        <nav className="flex-grow space-y-2 overflow-y-auto">
+        <nav className="flex-grow space-y-1 overflow-y-auto pr-2 scrollbar-hide">
           {navItems.map(item => (
             <NavItem
               key={item.id}
@@ -84,12 +84,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ activePage, setActivePage, isD
           ))}
         </nav>
         
-        <div className="mt-auto pt-4 border-t border-gray-200 dark:border-dark-border">
+        <div className="mt-auto pt-6 border-t border-gray-200 dark:border-dark-border">
           <button
             onClick={toggleDarkMode}
-            className="flex items-center w-full px-4 py-3 text-sm font-medium rounded-lg text-gray-500 dark:text-dark-text-secondary hover:bg-gray-100 dark:hover:bg-dark-card"
+            className="flex items-center w-full px-5 py-4 text-sm font-medium rounded-2xl bg-gray-50 dark:bg-dark-card border border-gray-100 dark:border-dark-border text-gray-500 dark:text-dark-text-secondary hover:bg-gray-100 dark:hover:bg-dark-border transition-colors"
           >
-            {isDarkMode ? <Sun className="w-5 h-5 mr-3" /> : <Moon className="w-5 h-5 mr-3" />}
+            {isDarkMode ? <Sun className="w-5 h-5 mr-3 text-warning" /> : <Moon className="w-5 h-5 mr-3 text-accent" />}
             <span>{isDarkMode ? 'Mode Clair' : 'Mode Sombre'}</span>
           </button>
         </div>
